@@ -127,7 +127,7 @@ function dateFormatted(date) {
         return new Date(date).toISOString().split("T")[0];
       }
     } else {
-      throw new Error("Invalid Date type or format");
+      throw new Error("Invalid Date type or format[yyyy-mm-dd]");
     }
   } catch (error) {
     console.error(error.message);
