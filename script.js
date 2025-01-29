@@ -93,7 +93,7 @@ function getLearnerData(courseInfo, assignmentGroup, learnerSubmissions) {
           learner = {
             id: el.learner_id,
             totalScore: 0, // Initialize total score for this learner
-            fullScore: 0, // Initialize full score for this learner
+            fullScore: 0, // Initialize full score for this course
           };
           result.push(learner);
         }
