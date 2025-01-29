@@ -39,6 +39,12 @@ const learnerSub = {
 
 const output = {
   id: number, // Id of the learner
-  ave: number, //
+  // the learner’s total, weighted average, in which assignments
+  // with more points_possible should be counted for more
+  // e.g. a learner with 50/100 on one assignment and 190/200 on another
+  // would have a weighted average score of 240/300 = 80%.
+  ave: number,
+  // if an assignment is not yet due, it should not be included in either
+  // the average or the keyed dictionary of scores
   [assignment_id]: number,
 };
