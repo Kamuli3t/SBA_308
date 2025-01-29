@@ -57,6 +57,8 @@ const learnerSubmissions = [
 
 function getLearnerData(courseInfo, assignmentGroup, learnerSubmissions) {
   const result = [];
+  let totalScore = 0;
+  let fullScore = 0;
 
   // for edge case we should make sure first that the given assignmentGroup aligns to the course:
   // therefore, we can compare the course id's, then follow conditionally
@@ -101,18 +103,22 @@ function getLearnerData(courseInfo, assignmentGroup, learnerSubmissions) {
           result.push(learner);
         }
 
-        // Compute average score dynamically
-        let scores = Object.keys(learner)
-          // Filter numeric assignment keys
-          .filter((key) => !isNaN(key))
-          // Extract scores
-          .map((key) => learner[key]);
+        // // Compute average score dynamically
+        // let scores = Object.keys(learner)
+        //   // Filter numeric assignment keys
+        //   .filter((key) => !isNaN(key))
+        //   // Extract scores
+        //   .map((key) => learner[key]);
 
-        // Calculate the average score for past-due assignments
-        learner.ave =
-          scores.length > 0
-            ? scores.reduce((acc, val) => acc + val, 0) / scores.length
-            : 0;
+        // // Calculate the average score for past-due assignments
+        // learner.ave =
+        //   scores.length > 0
+        //     ? scores.reduce((acc, val) => acc + val, 0) / scores.length
+        //     : 0;
+
+        totalScore += el.submission.score;
+        fullScore += appointedAssignment.points_possible;
+        learner.ave = totalScore / fullScore;
       });
 
       return result;
