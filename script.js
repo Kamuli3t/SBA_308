@@ -57,8 +57,6 @@ const learnerSubmissions = [
 
 function getLearnerData(courseInfo, assignmentGroup, learnerSubmissions) {
   const result = [];
-  let totalScore = 0;
-  let fullScore = 0;
 
   // for edge case we should make sure first that the given assignmentGroup aligns to the course:
   // therefore, we can compare the course id's, then follow conditionally
@@ -66,7 +64,7 @@ function getLearnerData(courseInfo, assignmentGroup, learnerSubmissions) {
     if (courseInfo["id"] !== assignmentGroup["course_id"]) {
       throw new Error("The Assignment Group is For a Different Course...");
     } else {
-      const today = new Date().toISOString().split("T")[0];
+      const today = dateFormatted("today");
 
       // this will filter the assignments past their due by today.
       const assignmentsPastDue = assignmentGroup.assignments.filter((el) => {
@@ -82,46 +80,37 @@ function getLearnerData(courseInfo, assignmentGroup, learnerSubmissions) {
         // If the assignment is not past due, ignore it
         if (!appointedAssignment) return;
 
+        const [rawScore, percentage] = calculateScore(
+          el.submission,
+          appointedAssignment
+        );
+
         // Find if the learner already exists in the result array
         let learner = result.find((learner) => learner.id === el.learner_id);
 
-        if (learner) {
-          // Store normalized score for the assignment, applying penalty if late
-          learner[el.assignment_id] = calculateScore(
-            el.submission,
-            appointedAssignment
-          );
-        } else {
-          // If learner is not in the result, create a new entry
+        if (!learner) {
+          // Create new learner entry
           learner = {
             id: el.learner_id,
-            [el.assignment_id]: calculateScore(
-              el.submission,
-              appointedAssignment
-            ),
+            totalScore: 0, // Initialize total score for this learner
+            fullScore: 0, // Initialize full score for this learner
           };
           result.push(learner);
         }
 
-        // // Compute average score dynamically
-        // let scores = Object.keys(learner)
-        //   // Filter numeric assignment keys
-        //   .filter((key) => !isNaN(key))
-        //   // Extract scores
-        //   .map((key) => learner[key]);
+        // Store normalized score for the assignment
+        learner[el.assignment_id] = percentage;
 
-        // // Calculate the average score for past-due assignments
-        // learner.ave =
-        //   scores.length > 0
-        //     ? scores.reduce((acc, val) => acc + val, 0) / scores.length
-        //     : 0;
+        // Update learner-specific total score and full score
+        learner.totalScore += rawScore;
+        learner.fullScore += appointedAssignment.points_possible;
 
-        totalScore += el.submission.score;
-        fullScore += appointedAssignment.points_possible;
-        learner.ave = totalScore / fullScore;
+        // Compute average score dynamically per learner
+        learner.ave =
+          learner.fullScore > 0 ? learner.totalScore / learner.fullScore : 0;
       });
 
-      return result;
+      return result.map(({ totalScore, fullScore, ...learner }) => learner); // Remove unnecessary properties before returning
     }
   } catch (error) {
     console.error("Invalid input: ", error.message);
@@ -129,10 +118,14 @@ function getLearnerData(courseInfo, assignmentGroup, learnerSubmissions) {
 }
 
 // date formatting function
-function dateFormatted(date = new Date()) {
+function dateFormatted(date) {
   try {
     if (typeof date === "string") {
-      return new Date(date).toISOString().split("T")[0];
+      if (date === "today") {
+        return new Date().toISOString().split("T")[0];
+      } else {
+        return new Date(date).toISOString().split("T")[0];
+      }
     } else {
       throw new Error("Invalid Date type or format");
     }
@@ -142,7 +135,7 @@ function dateFormatted(date = new Date()) {
   }
 }
 
-//
+// Score calculation function
 function calculateScore(submission, appointedAssignment) {
   const isLate =
     dateFormatted(submission.submitted_at) >
@@ -150,8 +143,11 @@ function calculateScore(submission, appointedAssignment) {
 
   const rawScore = isLate ? submission.score - 10 : submission.score;
 
-  //ensure the score is not negative
-  return Math.max(0, rawScore / appointedAssignment.points_possible);
+  // Ensure the score is not negative
+  return [
+    rawScore,
+    Math.max(0, rawScore / appointedAssignment.points_possible),
+  ];
 }
 
 console.log(getLearnerData(courseInfo, assignmentGroup, learnerSubmissions));
